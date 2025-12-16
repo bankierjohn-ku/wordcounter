@@ -1,18 +1,21 @@
 const express = require('express');
 const multer = require('multer');
 const Anthropic = require('@anthropic-ai/sdk');
-const path = require('path');
+const sharp = require('sharp');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB upload limit
+});
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY
 });
 
-// Serve static files
-app.use(express.static('.'));
+// Serve static files from public directory
+app.use(express.static('public'));
 
 // Analyze endpoint
 app.post('/analyze', upload.single('image'), async (req, res) => {
@@ -21,14 +24,46 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'No image uploaded' });
         }
 
-        // Convert image to base64
-        const base64Image = req.file.buffer.toString('base64');
+        // Process and compress image to ensure it's under 5MB
+        let imageBuffer = req.file.buffer;
+        let mediaType = req.file.mimetype || 'image/jpeg';
         
-        // Determine media type
-        let mediaType = 'image/jpeg';
-        if (req.file.mimetype) {
-            mediaType = req.file.mimetype;
+        // Convert to JPEG and resize if needed
+        let quality = 90;
+        let maxWidth = 2000;
+        
+        // Keep trying with lower quality/size until under 5MB
+        while (true) {
+            const processedBuffer = await sharp(imageBuffer)
+                .resize(maxWidth, null, { 
+                    fit: 'inside', 
+                    withoutEnlargement: true 
+                })
+                .jpeg({ quality })
+                .toBuffer();
+            
+            // Check if under 5MB (with some buffer room)
+            if (processedBuffer.length < 4.5 * 1024 * 1024) {
+                imageBuffer = processedBuffer;
+                mediaType = 'image/jpeg';
+                break;
+            }
+            
+            // Reduce quality or size and try again
+            if (quality > 60) {
+                quality -= 10;
+            } else if (maxWidth > 1000) {
+                maxWidth -= 200;
+                quality = 90;
+            } else {
+                return res.status(400).json({ 
+                    error: 'Image too large to process. Please use a smaller image.' 
+                });
+            }
         }
+
+        // Convert to base64
+        const base64Image = imageBuffer.toString('base64');
 
         // Call Claude API
         const message = await anthropic.messages.create({
