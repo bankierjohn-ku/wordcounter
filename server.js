@@ -25,12 +25,13 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
         }
 
         // Process and compress image to ensure it's under 5MB
+        // Use higher quality to preserve handwriting details
         let imageBuffer = req.file.buffer;
         let mediaType = req.file.mimetype || 'image/jpeg';
         
-        // Convert to JPEG and resize if needed
-        let quality = 90;
-        let maxWidth = 2000;
+        // Convert to JPEG with high quality
+        let quality = 95; // Start with very high quality
+        let maxWidth = 3000; // Allow larger images
         
         // Keep trying with lower quality/size until under 5MB
         while (true) {
@@ -50,11 +51,11 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
             }
             
             // Reduce quality or size and try again
-            if (quality > 60) {
-                quality -= 10;
-            } else if (maxWidth > 1000) {
-                maxWidth -= 200;
-                quality = 90;
+            if (quality > 80) {
+                quality -= 5; // Smaller steps to maintain quality
+            } else if (maxWidth > 1500) {
+                maxWidth -= 300;
+                quality = 95;
             } else {
                 return res.status(400).json({ 
                     error: 'Image too large to process. Please use a smaller image.' 
@@ -82,7 +83,16 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
                     },
                     {
                         type: 'text',
-                        text: 'Please transcribe all the handwritten text you see in this image. After transcribing, count the total number of words and provide your response in this exact format:\n\nWORD COUNT: [number]\n\nTRANSCRIPTION:\n[the full transcribed text]'
+                        text: `You are transcribing handwritten text. This is CRITICAL: You must transcribe EXACTLY what is written, preserving every word, spelling error, grammar mistake, and punctuation exactly as it appears. Do NOT correct anything. Do NOT fix spelling. Do NOT improve grammar. Do NOT add or remove words.
+
+After transcribing, count the total number of words very carefully. Count every single word, including small words like "a", "the", "I", etc.
+
+Provide your response in this exact format:
+
+WORD COUNT: [number]
+
+TRANSCRIPTION:
+[the full transcribed text exactly as written]`
                     }
                 ]
             }]
