@@ -83,16 +83,23 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
                     },
                     {
                         type: 'text',
-                        text: `You are transcribing handwritten text. This is CRITICAL: You must transcribe EXACTLY what is written, preserving every word, spelling error, grammar mistake, and punctuation exactly as it appears. Do NOT correct anything. Do NOT fix spelling. Do NOT improve grammar. Do NOT add or remove words.
+                        text: `You are transcribing handwritten text for word counting purposes. Accuracy is CRITICAL.
 
-After transcribing, count the total number of words very carefully. Count every single word, including small words like "a", "the", "I", etc.
+TRANSCRIPTION RULES - FOLLOW EXACTLY:
+1. Transcribe EVERY single word you see, even if barely legible
+2. For unclear words, make your best guess but transcribe something (don't skip)
+3. Do NOT correct spelling, grammar, or punctuation - preserve exactly as written
+4. Do NOT add or remove any words
+5. Include ALL words, even tiny ones like "a", "the", "I", "it"
+6. INCLUDE crossed-out or scribbled-over text - transcribe it as best you can
+7. Read carefully - don't rush or skip any words
+
+After transcribing, I will count the words myself, so focus entirely on capturing EVERY word accurately.
 
 Provide your response in this exact format:
 
-WORD COUNT: [number]
-
 TRANSCRIPTION:
-[the full transcribed text exactly as written]`
+[the full transcribed text exactly as written, with every single word included]`
                     }
                 ]
             }]
