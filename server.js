@@ -101,12 +101,14 @@ TRANSCRIPTION:
         // Parse Claude's response
         const responseText = message.content[0].text;
         
-        // Extract word count and transcription
-        const wordCountMatch = responseText.match(/WORD COUNT:\s*(\d+)/i);
+        // Extract transcription
         const transcriptionMatch = responseText.match(/TRANSCRIPTION:\s*([\s\S]*)/i);
-        
-        const wordCount = wordCountMatch ? parseInt(wordCountMatch[1]) : 0;
         const transcription = transcriptionMatch ? transcriptionMatch[1].trim() : responseText;
+        
+        // Count words ourselves instead of trusting Claude's count
+        // Split on whitespace and filter out empty strings
+        const words = transcription.trim().split(/\s+/).filter(word => word.length > 0);
+        const wordCount = words.length;
 
         res.json({
             wordCount,
