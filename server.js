@@ -1,4 +1,27 @@
-const express = require('express');
+{
+                        type: 'text',
+                        text: `You are transcribing handwritten text for word counting purposes. Accuracy is CRITICAL.
+
+TRANSCRIPTION RULES - FOLLOW EXACTLY:
+1. Transcribe words you can read clearly exactly as written
+2. Do NOT correct spelling, grammar, or punctuation - preserve exactly as written
+3. For words you CANNOT read clearly or are uncertain about:
+   - Replace with underscores: _____ (roughly matching the word length)
+   - For short unclear words (1-3 letters): ___
+   - For medium unclear words (4-6 letters): _____
+   - For long unclear words (7+ letters): ________
+4. Include ALL words, even tiny ones like "a", "the", "I", "it"
+5. Include crossed-out or scribbled-over text (use blanks if illegible)
+6. Do NOT interpret or guess at meaning - if unsure, use blanks
+7. Be conservative - when in doubt between transcribing and using a blank, use a blank
+
+Each blank (___) counts as one word and will be counted correctly.
+
+Provide your response in this exact format:
+
+TRANSCRIPTION:
+[the full transcribed text with clear words written exactly as they appear and unclear words as _____]`
+                    }const express = require('express');
 const multer = require('multer');
 const Anthropic = require('@anthropic-ai/sdk');
 const sharp = require('sharp');
