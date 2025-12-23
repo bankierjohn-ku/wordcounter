@@ -1,4 +1,30 @@
-const express = require('express');
+{
+                        type: 'text',
+                        text: `You are transcribing handwritten text for word counting purposes. Accuracy is CRITICAL.
+
+TRANSCRIPTION RULES - FOLLOW EXACTLY:
+1. Transcribe ALL words as best as you can read them
+2. Do NOT correct spelling, grammar, or punctuation - write exactly what you see
+3. Make your best educated guess for unclear words - transcribe what the letters look like
+4. ONLY use blanks (___) for words that are completely illegible/unreadable
+5. Blanks should be RARE - use them only when a word is truly impossible to read
+6. Include ALL words, even tiny ones like "a", "the", "I", "it"
+7. Include crossed-out or scribbled-over text (transcribe it as best you can)
+8. When handwriting is messy, transcribe your best interpretation of the letters you see
+9. Preserve all misspellings and grammar errors exactly as written
+
+Guidelines for blanks:
+- For short illegible words (1-3 letters): ___
+- For medium illegible words (4-6 letters): _____
+- For long illegible words (7+ letters): ________
+
+Remember: Most words should be transcribed, even if the handwriting is messy. Blanks are only for truly unreadable text.
+
+Provide your response in this exact format:
+
+TRANSCRIPTION:
+[the full transcribed text with words written as you read them and only truly illegible words as _____]`
+                    }const express = require('express');
 const multer = require('multer');
 const Anthropic = require('@anthropic-ai/sdk');
 const sharp = require('sharp');
@@ -86,24 +112,20 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
                         text: `You are transcribing handwritten text for word counting purposes. Accuracy is CRITICAL.
 
 TRANSCRIPTION RULES - FOLLOW EXACTLY:
-1. Transcribe words you can read clearly exactly as written
-2. Do NOT correct spelling, grammar, or punctuation - preserve exactly as written
-3. For words you CANNOT read clearly or are uncertain about:
-   - Replace with underscores: _____ (roughly matching the word length)
-   - For short unclear words (1-3 letters): ___
-   - For medium unclear words (4-6 letters): _____
-   - For long unclear words (7+ letters): ________
-4. Include ALL words, even tiny ones like "a", "the", "I", "it"
-5. Include crossed-out or scribbled-over text (use blanks if illegible)
-6. Do NOT interpret or guess at meaning - if unsure, use blanks
-7. Be conservative - when in doubt between transcribing and using a blank, use a blank
+1. Transcribe EVERY single word you see, even if barely legible
+2. For unclear words, make your best guess but transcribe something (don't skip)
+3. Do NOT correct spelling, grammar, or punctuation - preserve exactly as written
+4. Do NOT add or remove any words
+5. Include ALL words, even tiny ones like "a", "the", "I", "it"
+6. INCLUDE crossed-out or scribbled-over text - transcribe it as best you can
+7. Read carefully - don't rush or skip any words
 
-Each blank (___) counts as one word and will be counted correctly.
+After transcribing, I will count the words myself, so focus entirely on capturing EVERY word accurately.
 
 Provide your response in this exact format:
 
 TRANSCRIPTION:
-[the full transcribed text with clear words written exactly as they appear and unclear words as _____]`
+[the full transcribed text exactly as written, with every single word included]`
                     }
                 ]
             }]
