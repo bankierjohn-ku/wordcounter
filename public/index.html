@@ -201,8 +201,8 @@
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📷</div>
             <div class="upload-text">Click to upload or drag and drop</div>
-            <div class="upload-hint">Supports JPG, PNG, HEIC</div>
-            <input type="file" id="fileInput" accept="image/*" capture="environment">
+            <div class="upload-hint">Supports JPG, PNG, HEIC (iPhone photos)</div>
+            <input type="file" id="fileInput" accept="image/*,.heic,.heif" capture="environment">
         </div>
         
         <div class="preview" id="preview">
@@ -273,7 +273,13 @@
         });
         
         function handleFile(file) {
-            if (!file.type.startsWith('image/')) {
+            // Accept images and HEIC files (common on iPhones)
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'];
+            const isImage = file.type.startsWith('image/') || 
+                           file.name.toLowerCase().endsWith('.heic') || 
+                           file.name.toLowerCase().endsWith('.heif');
+            
+            if (!isImage) {
                 showError('Please upload an image file');
                 return;
             }
