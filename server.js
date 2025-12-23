@@ -1,30 +1,4 @@
-{
-                        type: 'text',
-                        text: `You are transcribing handwritten text for word counting purposes. Accuracy is CRITICAL.
-
-TRANSCRIPTION RULES - FOLLOW EXACTLY:
-1. Transcribe ALL words as best as you can read them
-2. Do NOT correct spelling, grammar, or punctuation - write exactly what you see
-3. Make your best educated guess for unclear words - transcribe what the letters look like
-4. ONLY use blanks (___) for words that are completely illegible/unreadable
-5. Blanks should be RARE - use them only when a word is truly impossible to read
-6. Include ALL words, even tiny ones like "a", "the", "I", "it"
-7. Include crossed-out or scribbled-over text (transcribe it as best you can)
-8. When handwriting is messy, transcribe your best interpretation of the letters you see
-9. Preserve all misspellings and grammar errors exactly as written
-
-Guidelines for blanks:
-- For short illegible words (1-3 letters): ___
-- For medium illegible words (4-6 letters): _____
-- For long illegible words (7+ letters): ________
-
-Remember: Most words should be transcribed, even if the handwriting is messy. Blanks are only for truly unreadable text.
-
-Provide your response in this exact format:
-
-TRANSCRIPTION:
-[the full transcribed text with words written as you read them and only truly illegible words as _____]`
-                    }const express = require('express');
+const express = require('express');
 const multer = require('multer');
 const Anthropic = require('@anthropic-ai/sdk');
 const sharp = require('sharp');
@@ -32,34 +6,27 @@ const sharp = require('sharp');
 const app = express();
 const upload = multer({ 
     storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB upload limit
+    limits: { fileSize: 50 * 1024 * 1024 }
 });
 
-// Initialize Anthropic client
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY
 });
 
-// Serve static files from public directory
 app.use(express.static('public'));
 
-// Analyze endpoint
 app.post('/analyze', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No image uploaded' });
         }
 
-        // Process and compress image to ensure it's under 5MB
-        // Use higher quality to preserve handwriting details
         let imageBuffer = req.file.buffer;
         let mediaType = req.file.mimetype || 'image/jpeg';
         
-        // Convert to JPEG with high quality
-        let quality = 95; // Start with very high quality
-        let maxWidth = 3000; // Allow larger images
+        let quality = 95;
+        let maxWidth = 3000;
         
-        // Keep trying with lower quality/size until under 5MB
         while (true) {
             const processedBuffer = await sharp(imageBuffer)
                 .resize(maxWidth, null, { 
@@ -69,16 +36,14 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
                 .jpeg({ quality })
                 .toBuffer();
             
-            // Check if under 5MB (with some buffer room)
             if (processedBuffer.length < 4.5 * 1024 * 1024) {
                 imageBuffer = processedBuffer;
                 mediaType = 'image/jpeg';
                 break;
             }
             
-            // Reduce quality or size and try again
             if (quality > 80) {
-                quality -= 5; // Smaller steps to maintain quality
+                quality -= 5;
             } else if (maxWidth > 1500) {
                 maxWidth -= 300;
                 quality = 95;
@@ -89,10 +54,8 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
             }
         }
 
-        // Convert to base64
         const base64Image = imageBuffer.toString('base64');
 
-        // Call Claude API
         const message = await anthropic.messages.create({
             model: 'claude-sonnet-4-20250514',
             max_tokens: 4000,
@@ -109,37 +72,17 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
                     },
                     {
                         type: 'text',
-                        text: `You are transcribing handwritten text for word counting purposes. Accuracy is CRITICAL.
-
-TRANSCRIPTION RULES - FOLLOW EXACTLY:
-1. Transcribe EVERY single word you see, even if barely legible
-2. For unclear words, make your best guess but transcribe something (don't skip)
-3. Do NOT correct spelling, grammar, or punctuation - preserve exactly as written
-4. Do NOT add or remove any words
-5. Include ALL words, even tiny ones like "a", "the", "I", "it"
-6. INCLUDE crossed-out or scribbled-over text - transcribe it as best you can
-7. Read carefully - don't rush or skip any words
-
-After transcribing, I will count the words myself, so focus entirely on capturing EVERY word accurately.
-
-Provide your response in this exact format:
-
-TRANSCRIPTION:
-[the full transcribed text exactly as written, with every single word included]`
+                        text: 'You are transcribing handwritten text for word counting purposes. Accuracy is CRITICAL.\n\nTRANSCRIPTION RULES - FOLLOW EXACTLY:\n1. Transcribe ALL words as best as you can read them\n2. Do NOT correct spelling, grammar, or punctuation - write exactly what you see\n3. Make your best educated guess for unclear words - transcribe what the letters look like\n4. ONLY use blanks (___) for words that are completely illegible/unreadable\n5. Blanks should be RARE - use them only when a word is truly impossible to read\n6. Include ALL words, even tiny ones like "a", "the", "I", "it"\n7. Include crossed-out or scribbled-over text (transcribe it as best you can)\n8. When handwriting is messy, transcribe your best interpretation of the letters you see\n9. Preserve all misspellings and grammar errors exactly as written\n\nGuidelines for blanks:\n- For short illegible words (1-3 letters): ___\n- For medium illegible words (4-6 letters): _____\n- For long illegible words (7+ letters): ________\n\nRemember: Most words should be transcribed, even if the handwriting is messy. Blanks are only for truly unreadable text.\n\nProvide your response in this exact format:\n\nTRANSCRIPTION:\n[the full transcribed text with words written as you read them and only truly illegible words as _____]'
                     }
                 ]
             }]
         });
 
-        // Parse Claude's response
         const responseText = message.content[0].text;
         
-        // Extract transcription
         const transcriptionMatch = responseText.match(/TRANSCRIPTION:\s*([\s\S]*)/i);
         const transcription = transcriptionMatch ? transcriptionMatch[1].trim() : responseText;
         
-        // Count words ourselves instead of trusting Claude's count
-        // Split on whitespace and filter out empty strings
         const words = transcription.trim().split(/\s+/).filter(word => word.length > 0);
         const wordCount = words.length;
 
